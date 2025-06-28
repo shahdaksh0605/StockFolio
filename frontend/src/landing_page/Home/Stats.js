@@ -28,6 +28,7 @@ export default function Stats() {
                 </div>
             </div>
         </div>
+        <img src="images/pressLogos.png" alt="" style={{marginLeft:"200px",width:"90%"}} className='mb-5'/>
     </div>
   )
 }
