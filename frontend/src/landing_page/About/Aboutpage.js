@@ -5,10 +5,8 @@ import Team from './Team'
 export default function Aboutpage() {
   return (
     <div>
-      <Navbar/>
       <Hero/>
       <Team/>
-      <Footer/>
     </div>
   )
 }

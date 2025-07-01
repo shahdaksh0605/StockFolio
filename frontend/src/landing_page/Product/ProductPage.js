@@ -7,12 +7,10 @@ import Universe from './Universe'
 export default function ProductPage() {
   return (
     <div>
-      <Navbar/>
       <Hero/>
       <LeftImage/>
       <RightImage/>
       <Universe/>
-      <Footer/>
     </div>
   )
 }

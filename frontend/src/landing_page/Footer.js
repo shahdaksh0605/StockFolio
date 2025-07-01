@@ -13,7 +13,7 @@ export default function Footer() {
               <a href="" className='text-decoration-none text-dark fs-5'>About</a><br/><br />
               <a href="" className='text-decoration-none text-dark fs-5'>Products</a><br /><br />
               <a href="" className='text-decoration-none text-dark fs-5'>Pricing</a><br /><br />
-              <a href="" className='text-decoration-none text-dark fs-5'>Referral Programme</a><br /><br />
+              <a href="" className='text-decoration-none text-dark fs-5'>Referral Programm</a><br /><br />
               <a href="" className='text-decoration-none text-dark fs-5'>Careers</a><br /><br />
               <a href="" className='text-decoration-none text-dark fs-5'>StockFolio.Tech</a><br /><br />
               <a href="" className='text-decoration-none text-dark fs-5'>Press & Media</a><br /><br />

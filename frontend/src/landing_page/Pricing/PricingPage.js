@@ -5,10 +5,8 @@ import Brokerage from './Brokerage'
 export default function PricingPage() {
   return (
     <div>
-      <Navbar/>
       <Hero/>
       <Brokerage/>
-      <Footer/>
     </div>
   )
 }
