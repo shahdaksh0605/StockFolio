@@ -27,11 +27,6 @@ export default function Navbar() {
                 </Link>
               </li>
               <li className="nav-item fs-5 fw-semibold mx-2">
-                <Link className="nav-link" to="/products">
-                  Products
-                </Link>
-              </li>
-              <li className="nav-item fs-5 fw-semibold mx-2">
                 <Link className="nav-link" to="/pricing">
                   Pricing
                 </Link>

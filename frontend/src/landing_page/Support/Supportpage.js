@@ -1,12 +1,16 @@
-import React from 'react'
-import Hero from './Hero'
-import Ticket from './Ticket'
+import React from "react";
 
-export default function Supportpage() {
+import Hero from "./Hero";
+// import CreateTicket from './Ticket';
+
+
+function PricingPage() {
   return (
-    <div>
-      <Hero/>
-      <Ticket/>
-    </div>
-  )
+    <>
+      <Hero />
+      {/* <CreateTicket /> */}
+    </>
+  );
 }
+
+export default PricingPage;
