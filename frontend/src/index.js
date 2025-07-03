@@ -12,8 +12,8 @@ import Support from './landing_page/Support/Supportpage';
 import Navbar from './landing_page/Navbar';
 import Footer from './landing_page/Footer';
 import Notfound from './landing_page/NotFound';
-import Dashboard from './Dashboard/Home';
-// ✅ Import AuthProvider
+import Home from './Dashboard/Home';
+
 import { AuthProvider } from './context/authcontext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -21,19 +21,17 @@ root.render(
   <React.StrictMode>
     <AuthProvider>
       <BrowserRouter>
-        <Navbar />
         <Routes>
           <Route path='/' element={<Homepage />} />
           <Route path='/signup' element={<Signup />} />
           <Route path='/login' element={<Login />} />
-          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/dashboard' element={<Home />} />
 
           <Route path='/about' element={<About />} />
           <Route path='/pricing' element={<Pricing />} />
           <Route path='/support' element={<Support />} />
           <Route path='*' element={<Notfound />} />
         </Routes>
-        <Footer />
       </BrowserRouter>
     </AuthProvider>
   </React.StrictMode>

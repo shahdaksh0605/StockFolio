@@ -25,7 +25,6 @@
                 setIsSigningIn(true);
                 // doSignInWithGoogle().catch(() => setIsSigningIn(false));
 
-                // i need to write herre??
                 try {
                     const userCredential = await doSignInWithGoogle();
                     const user = userCredential.user;
