@@ -53,14 +53,14 @@
 }
 
 .register-form input:focus {
-    border-color: #4f46e5;
+    border-color: #000000;
 }
 
 /* Button */
 .submit-button {
     width: 100%;
     padding: 12px;
-    background-color: #4f46e5;
+    background-color: #000000;
     color: white;
     font-size: 15px;
     font-weight: 600;
@@ -71,7 +71,7 @@
 }
 
 .submit-button:hover {
-    background-color: #4338ca;
+    background-color: #000000;
     box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
 }
 
@@ -89,7 +89,7 @@
 }
 
 .login-link {
-    color: #4f46e5;
+    color: #000000;
     font-weight: bold;
     text-decoration: none;
 }

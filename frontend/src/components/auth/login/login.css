@@ -62,12 +62,12 @@
 }
 
 .form-group input:focus {
-  border-color: #6366f1;
+  border-color: #000000;
 }
 
 .submit-button {
   height: 2.5rem;
-  background: #6366f1;
+  background: #000000;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -78,7 +78,7 @@
 }
 
 .submit-button:hover:not(:disabled) {
-  background: #4f46e5;
+  background: #000000;
 }
 
 .submit-button:disabled {
@@ -94,7 +94,7 @@
 
 .signup-link a {
   font-weight: bold;
-  color: #4f46e5;
+  color: #000000;
   text-decoration: none;
 }
 
@@ -215,12 +215,12 @@
 }
 
 .form-group input:focus {
-  border-color: #6366f1;
+  border-color: #000000;
 }
 
 .submit-button {
   height: 2.5rem;
-  background: #6366f1;
+  background: #000000;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -231,7 +231,7 @@
 }
 
 .submit-button:hover:not(:disabled) {
-  background: #4f46e5;
+  background: #000000;
 }
 
 .submit-button:disabled {
@@ -247,7 +247,7 @@
 
 .signup-link a {
   font-weight: bold;
-  color: #4f46e5;
+  color: #000000;
   text-decoration: none;
 }
 
