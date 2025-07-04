@@ -1,81 +1,46 @@
 from flask import Flask
 from flask_socketio import SocketIO
+from flask_cors import CORS
+from flask import request
+import yfinance as yf
 import threading
-import websocket
-import json
 import time
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
-API_KEY = "d1j4nj1r01qhbuvtg17gd1j4nj1r01qhbuvtg180"
+CORS(app)
+socketio = SocketIO(app,cors_allowed_origins="*",ping_timeout=20, ping_interval=10,async_mode="threading")
 
-connected_symbols = set()
-pending_subscriptions = set()
-ws_app = None
+symbols = ["RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "^BSESN", "^NSEI"]
+latest_prices = {}
+
+
+def fetch_stock_prices():
+    global latest_prices
+    while True:
+        for symbol in symbols:
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="1d")
+            if not hist.empty:
+                price = hist["Close"].iloc[-1]
+                latest_prices[symbol] = float(price)
+                print(f"Emitting {symbol}: ₹{price}")
+                # Emit to ALL clients
+                socketio.emit("stock_update", {"symbol": symbol, "price": float(price)})
+        time.sleep(30)
+
 
 @socketio.on("connect")
 def handle_connect():
-    print("🔌 A client connected via WebSocket")
-
-def on_message(ws, message):
-    print("📩 Received from Finnhub:", message)
-    data = json.loads(message)
-    if data.get("type") == "trade":
-        for trade in data["data"]:
-            print("📤 Emitting to frontend:", trade["s"], trade["p"])
-            print(trade["s"],trade["p"])
-            socketio.emit("stock_update", {
-                "symbol": trade["s"],   
-                "price": trade["p"]
-            })
-
-def on_open(ws):
-    print("✅ WebSocket connection opened.")
-    # Resubscribe to all connected symbols
-    for symbol in connected_symbols:
-        subscribe(ws, symbol)
-
-    # Loop to handle new subscription requests dynamically
-    def subscription_loop():
-        while True:
-            if pending_subscriptions:
-                symbol = pending_subscriptions.pop()
-                if symbol not in connected_symbols:
-                    connected_symbols.add(symbol)
-                    subscribe(ws, symbol)
-            time.sleep(1)  # avoid tight loop
-
-    threading.Thread(target=subscription_loop, daemon=True).start()
-
-def subscribe(ws, symbol):
-    message = json.dumps({"type": "subscribe", "symbol": symbol})
-    print("📡 Subscribing to:", symbol)
-    ws.send(message)
-
-def run_finnhub_websocket():
-    global ws_app
-    ws_app = websocket.WebSocketApp(
-        f"wss://ws.finnhub.io?token={API_KEY}",
-        on_open=on_open,
-        on_message=on_message
-    )
-    ws_app.run_forever()
-
-# Start Finnhub WebSocket only once
-threading.Thread(target=run_finnhub_websocket, daemon=True).start()
-
-@socketio.on("subscribe_stocks")
-def handle_subscription(data):
-    symbols = data.get("symbols", [])
-    print(f"🖥️  Client subscribed to: {symbols}")
-    for symbol in symbols:
-        print(f"📦 Adding symbol to queue: {symbol}")
-        if symbol not in connected_symbols:
-            pending_subscriptions.add(symbol)  # Let on_open thread handle send
+    print("A client connected")
+    for symbol, price in latest_prices.items():
+        print(symbol,price)
+        socketio.emit("stock_update", {"symbol": symbol, "price": price},to=request.sid)
 
 @app.route("/")
 def home():
-    return "Backend Running"
+    return "backend running"
+
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, port=5000)
+    threading.Thread(target=fetch_stock_prices, daemon=True).start()
+    socketio.run(app, debug=False, port=5000)
