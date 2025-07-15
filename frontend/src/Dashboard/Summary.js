@@ -2,62 +2,58 @@ import React from "react";
 
 const Summary = () => {
   return (
-    <>
-      <div className="username">
-        <h6>Hi, User!</h6>
-        <hr className="divider" />
+    <div className="container p-3 bg-white rounded shadow-sm w-100 h-100">
+      <div className="mb-3">
+        <h6 className="mb-1">Hi, User!</h6>
+        <hr className="my-2" />
       </div>
 
-      <div className="section">
+      <div className="mb-4">
         <span>
-          <p>Equity</p>
+          <p className="mb-2 fw-bold">Equity</p>
         </span>
-
-        <div className="data">
-          <div className="first">
-            <h3>3.74k</h3>
-            <p>Margin available</p>
+        <div className="p-3 bg-light rounded">
+          <div className="mb-2">
+            <h3 className="mb-1">3.74k</h3>
+            <p className="mb-0 text-muted">Margin available</p>
           </div>
-          <hr />
-
-          <div className="second">
-            <p>
-              Margins used <span>0</span>{" "}
+          <hr className="my-2" />
+          <div className="d-flex flex-column gap-1">
+            <p className="mb-0">
+              Margins used <span className="fw-bold">0</span>
             </p>
-            <p>
-              Opening balance <span>3.74k</span>{" "}
+            <p className="mb-0">
+              Opening balance <span className="fw-bold">3.74k</span>
             </p>
           </div>
         </div>
-        <hr className="divider" />
+        <hr className="my-3" />
       </div>
 
-      <div className="section">
+      <div className="mb-4">
         <span>
-          <p>Holdings (13)</p>
+          <p className="mb-2 fw-bold">Holdings (13)</p>
         </span>
-
-        <div className="data">
-          <div className="first">
-            <h3 className="profit">
-              1.55k <small>+5.20%</small>{" "}
+        <div className="p-3 bg-light rounded">
+          <div className="mb-2">
+            <h3 className="mb-1 text-success">
+              1.55k <small className="text-success">+5.20%</small>
             </h3>
-            <p>P&L</p>
+            <p className="mb-0 text-muted">P&L</p>
           </div>
-          <hr />
-
-          <div className="second">
-            <p>
-              Current Value <span>31.43k</span>{" "}
+          <hr className="my-2" />
+          <div className="d-flex flex-column gap-1">
+            <p className="mb-0">
+              Current Value <span className="fw-bold">31.43k</span>
             </p>
-            <p>
-              Investment <span>29.88k</span>{" "}
+            <p className="mb-0">
+              Investment <span className="fw-bold">29.88k</span>
             </p>
           </div>
         </div>
-        <hr className="divider" />
+        <hr className="my-3" />
       </div>
-    </>
+    </div>
   );
 };
 

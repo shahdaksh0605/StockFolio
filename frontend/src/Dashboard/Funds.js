@@ -20,7 +20,7 @@ const Funds = () => {
             <div className="data">
               <p>Available margin</p>
               <p className="imp colored">4,043.10</p>
-            </div>
+            </div>  
             <div className="data">
               <p>Used margin</p>
               <p className="imp">3,757.30</p>

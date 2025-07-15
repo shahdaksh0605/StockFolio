@@ -25,12 +25,14 @@ root.render(
           <Route path='/' element={<Homepage />} />
           <Route path='/signup' element={<Signup />} />
           <Route path='/login' element={<Login />} />
-          <Route path='/dashboard' element={<Home />} />
+          <Route path='/dashboard/*' element={<Home />} />
 
           <Route path='/about' element={<About />} />
           <Route path='/pricing' element={<Pricing />} />
           <Route path='/support' element={<Support />} />
           <Route path='*' element={<Notfound />} />
+     
+          
         </Routes>
       </BrowserRouter>
     </AuthProvider>

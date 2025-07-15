@@ -3,16 +3,31 @@ import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/authcontext';
 import { doCreateUserWithEmailAndPassword } from '../../../firebase/auth';
 import './register.css';
+import { auth, provider } from "../../../firebase/firebase";
+import {
+   signInWithPopup,
+} from "firebase/auth";
 
 const Register = () => {
   const { userLoggedIn } = useAuth();
 
-  const [name, setName] = useState(''); // 👈 for username
+  const [name, setName] = useState(''); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
+  const handleGoogleSignup = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      setName(user.displayName || "");
+      setEmail(user.email || "");
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +46,7 @@ const Register = () => {
       setIsRegistering(true);
       setError('');
       try {
-        // ✅ Create Firebase Auth user
+        
         const userCredential = await doCreateUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
@@ -119,6 +134,7 @@ const Register = () => {
             >
               {isRegistering ? 'Signing Up...' : 'Sign Up'}
             </button>
+            <button onClick={() => handleGoogleSignup()} className='btn btn-dark'><i class="fa-brands fa-google m-2"></i>Sign Up with Google</button>
 
             <div className="form-footer">
               Already have an account?{' '}

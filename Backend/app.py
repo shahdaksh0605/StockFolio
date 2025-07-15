@@ -41,6 +41,6 @@ def home():
     return "backend running"
 
 
-if __name__ == "__main__":
-    threading.Thread(target=fetch_stock_prices, daemon=True).start()
-    socketio.run(app, debug=False, port=5000)
+
+threading.Thread(target=fetch_stock_prices, daemon=True).start()
+socketio.run(app, debug=False, port=5000)
