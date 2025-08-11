@@ -2,7 +2,7 @@ import React from "react";
 
 function Team() {
   return (
-    <div className="container">
+    <div className="">
       <div className="row p-3 mt-5 border-top">
         <h1 className="text-center ">People</h1>
       </div>

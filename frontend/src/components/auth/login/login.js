@@ -26,11 +26,13 @@
                 // doSignInWithGoogle().catch(() => setIsSigningIn(false));
 
                 try {
+                    const backendStatus = await fetch("http://localhost:8000/health");
+                    if (!backendStatus.ok) throw new Error('Backend is down. Please try again later.');
                     const userCredential = await doSignInWithGoogle();
                     const user = userCredential.user;
 
                     // 🔁 Send user data to backend to sync with MongoDB
-                    await fetch("http://localhost:8000/stockfolio/saveuser", {
+                    await fetch("http://localhost:8000/stockfolio/getUser", {
                         method: "POST",
                         headers: {
                         "Content-Type": "application/json"

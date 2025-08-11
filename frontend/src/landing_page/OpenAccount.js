@@ -3,7 +3,7 @@ import {Link} from "react-router-dom"
 
 export default function OpenAccount() {
   return (
-    <div className='container text-center mt-5'>
+    <div className='text-center mt-5'>
        <br /><br /><br /> 
         <div className='row'>
             <h1 className='mb-3'>Open a StockFolio account</h1>

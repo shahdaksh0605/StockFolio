@@ -2,7 +2,7 @@ import React from "react";
 
 const Summary = () => {
   return (
-    <div className="container p-3 bg-white rounded shadow-sm w-100 h-100">
+    <div className="p-3 bg-white rounded shadow-sm w-100 h-100">
       <div className="mb-3">
         <h6 className="mb-1">Hi, User!</h6>
         <hr className="my-2" />

@@ -2,7 +2,7 @@ import React from 'react'
 
 export default function Education() {
   return (
-    <div className='container mt-5 mb-5' style={{marginRight:"450px"}}>
+    <div className='mt-5 mb-5' style={{marginRight:"450px"}}>
           <br /><br /><br />
         <div className='row'>
             <div className='col-4'>

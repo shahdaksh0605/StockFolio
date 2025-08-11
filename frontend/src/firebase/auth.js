@@ -1,6 +1,6 @@
   import { auth } from "./firebase";
 
-  import { createUserWithEmailAndPassword,GoogleAuthProvider,sendEmailVerification,sendPasswordResetEmail,signInWithEmailAndPassword, signInWithPopup, updatePassword } from "firebase/auth";
+  import { createUserWithEmailAndPassword,GoogleAuthProvider,sendEmailVerification,sendPasswordResetEmail,signInWithEmailAndPassword, signInWithPopup, updatePassword,deleteUser } from "firebase/auth";
 
   export const doCreateUserWithEmailAndPassword = async (email, password) => {
     //here right
@@ -38,3 +38,11 @@
       url: `${window.location.origin}/home`,
     });
   };
+
+  export const doDeleteUser = () => {
+  if (auth.currentUser) {
+    return deleteUser(auth.currentUser);
+  } else {
+    return Promise.reject(new Error("No user is currently logged in"));
+  }
+};

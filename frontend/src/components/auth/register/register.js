@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/authcontext';
 import { doCreateUserWithEmailAndPassword } from '../../../firebase/auth';
 import './register.css';
-import { auth, provider } from "../../../firebase/firebase";
+import { auth, provider, } from "../../../firebase/firebase";
 import {
-   signInWithPopup,
+  signInWithPopup,
 } from "firebase/auth";
 
+import { useNavigate } from 'react-router-dom';
 const Register = () => {
+  const navigate = useNavigate()
   const { userLoggedIn } = useAuth();
 
-  const [name, setName] = useState(''); 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,6 +26,24 @@ const Register = () => {
 
       setName(user.displayName || "");
       setEmail(user.email || "");
+
+      const response = await fetch("http://localhost:8000/stockfolio/saveuser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: user.email, 
+          name: user.displayName, 
+          firebaseUID: user.uid 
+        })
+      });
+  
+      if (response.ok) {
+        navigate('/dashboard');
+      } else {
+        setError('Something went wrong while saving user.');
+      }
+
+      
     } catch (error) {
       alert(error.message);
     }
@@ -31,46 +51,43 @@ const Register = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (!name.trim()) {
-      setError('Please enter your name');
-      return;
-    }
+    if (password !== confirmPassword) return setError('Passwords do not match');
+    if (!name.trim()) return setError('Please enter your name');
 
     if (!isRegistering) {
       setIsRegistering(true);
       setError('');
       try {
-        
+
+        const backendStatus = await fetch("http://localhost:8000/health");
+        if (!backendStatus.ok) throw new Error('Backend is down. Please try again later.');
+        else console.log("backend connected")
         const userCredential = await doCreateUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        // ✅ Save data to MongoDB (not updating Firebase profile)
-        await fetch("http://localhost:8000/stockfolio/saveuser", {
+        const response = await fetch("http://localhost:8000/stockfolio/saveuser", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: user.email,
-            name: name, // 👈 send name from input field
-            firebaseUID: user.uid
-          })
+          body: JSON.stringify({ email: user.email, name, firebaseUID: user.uid })
         });
+          console.log(response)
+        if (response.ok) {
+          navigate('/dashboard')
+        } else {
+          setError('Something went wrong while saving user.');
+        }
 
       } catch (err) {
-        setError(err.message);
+        setError(err.message, "okk");
         setIsRegistering(false);
       }
     }
   };
 
+
   return (
     <>
-      {userLoggedIn && <Navigate to="/dashboard" replace />}
+      {/* {userLoggedIn && <Navigate to="/dashboard" replace />} */}
       <main className="register-page">
         <div className="register-container">
           <div className="register-header">
@@ -134,7 +151,7 @@ const Register = () => {
             >
               {isRegistering ? 'Signing Up...' : 'Sign Up'}
             </button>
-            <button onClick={() => handleGoogleSignup()} className='btn btn-dark'><i class="fa-brands fa-google m-2"></i>Sign Up with Google</button>
+            <button onClick={() => handleGoogleSignup()} style={{backgroundColor:"black",marginLeft:"45px "}} className='btn rounded border'><img src="https://www.svgrepo.com/show/475656/google-color.svg" className='m-1' height="30px" width="30px" alt="Google Icon" />{isRegistering ? 'Signing Up...' : 'Continue with Google'}</button>
 
             <div className="form-footer">
               Already have an account?{' '}

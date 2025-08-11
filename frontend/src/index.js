@@ -31,8 +31,6 @@ root.render(
           <Route path='/pricing' element={<Pricing />} />
           <Route path='/support' element={<Support />} />
           <Route path='*' element={<Notfound />} />
-     
-          
         </Routes>
       </BrowserRouter>
     </AuthProvider>

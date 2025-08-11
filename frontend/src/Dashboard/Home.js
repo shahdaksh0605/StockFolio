@@ -2,6 +2,7 @@ import React from "react";
 
 import TopBar from "./topBar";
 import { Route, Routes } from "react-router-dom";
+import { GeneralContextProvider } from "./GeneralContext";
 
 import Apps from "./App";
 import Funds from "./Funds";
@@ -18,8 +19,10 @@ const Home = () => {
 
       <TopBar /> 
       <div className="d-flex flex-direction-row" style={{height:"700px"}}>
+        <GeneralContextProvider>
         <WatchList />
-      <div className="w-50">
+        </GeneralContextProvider>
+      <div className="p-3 bg-light rounded w-50  m-0">
         <Routes>
           <Route index element={<Summary />} />
           <Route path="orders" element={<Orders />} />

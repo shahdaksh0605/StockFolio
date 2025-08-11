@@ -2,10 +2,10 @@ import React from 'react'
 
 export default function Pricing() {
   return (
-    <div className='container mt-5 mb-5' style={{marginRight:"450px"}}>
+    <div className='m-5' style={{marginRight:"450px"}}>
         <div className='row'>
             <div className='col-4'>
-                <h1 className='mb-3'>Unbeatable Pricing</h1>
+                <h1 className='m-3 p-2'>Unbeatable Pricing</h1>
                 <p>We pioneered the concept of discount broking and price transparency in India. Flat fees and no hidden charges.</p>
                 <a href="" className='me-2 text-decoration-none fs-4 '>See Pricing<i class="fa-solid fa-arrow-right-long"></i></a>
             </div>
