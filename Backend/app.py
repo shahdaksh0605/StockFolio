@@ -48,9 +48,9 @@ def fetch_stock_prices():
                 }
 
                 print(f"Emitting {symbol}: ₹{current_price} | Change ₹{net_change} | {percent_change:.2f}%")
-
+                clean_symbol = symbol.replace(".NS", "")
                 socketio.emit("stock_update", {
-                    "symbol": symbol,
+                    "symbol": clean_symbol,
                     "price": round(current_price, 2),
                     "net_change": round(net_change, 2),
                     "percent_change": round(percent_change, 2)

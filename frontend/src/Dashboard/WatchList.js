@@ -57,8 +57,9 @@ const WatchListItem = ({ stock }) => {
     const [showWatchListAction, setshowWatchListAction] = useState(false);
     const prices = useStockPrices();  // ⬅️ Hook added
 
-    const liveData = prices[stock.name+".NS"];  // live price, net_change, percent_change
-
+    const cleanSymbol = stock.name.replace(".NS", ""); // Remove .NS if present
+    const liveData = prices[cleanSymbol];
+    
     const handleMouseEnter = () => setshowWatchListAction(true);
     const handleMouseExit = () => setshowWatchListAction(false);
 

@@ -1,6 +1,6 @@
 import React from "react";
 
-import TopBar from "./topBar";
+import TopBar from "./TopBar";
 import { Route, Routes } from "react-router-dom";
 import { GeneralContextProvider } from "./GeneralContext";
 
