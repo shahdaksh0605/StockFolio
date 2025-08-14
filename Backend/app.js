@@ -3,8 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const db = require("./configdb/db");
 const userroutes = require("./router/userroutes");
-const orderroutes = require("./router/orderroutes"); // ✅ New
-
+const orderroutes = require("./router/orderroutes"); 
+const holdingsRoutes = require("./router/holding");
 const app = express();
 const PORT = process.env.PORT || 3002;
 
@@ -17,6 +17,7 @@ db(); // Connect MongoDB
 app.get("/health", (req, res) => res.send("OK"));
 app.use("/stockfolio", userroutes);
 app.use("/stockfolio", orderroutes); // ✅ Register order routes
+app.use("/stockfolio", holdingsRoutes);
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

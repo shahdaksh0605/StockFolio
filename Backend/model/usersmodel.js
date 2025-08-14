@@ -4,7 +4,7 @@
                 name: { type: String, required: true },
                 email: { type: String, required: true, unique: true },
                 firebaseUID: { type: String, required: true, unique: true },
-                portfolio: [{ type: mongoose.Schema.Types.ObjectId, ref: "Holding" }],
+                portfolio: [{ type: mongoose.Schema.Types.ObjectId, ref: "holding" }],
                 positions: [{ type: mongoose.Schema.Types.ObjectId, ref: "position" }],
                 orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }]
             });

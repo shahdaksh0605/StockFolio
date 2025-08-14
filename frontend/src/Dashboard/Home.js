@@ -9,7 +9,6 @@ import Funds from "./Funds";
 import Holdings from "./Holding";
 
 import Orders from "./Order";
-import Positions from "./Position";
 import Summary from "./Summary";
 import WatchList from "./WatchList";
 
@@ -27,7 +26,6 @@ const Home = () => {
           <Route index element={<Summary />} />
           <Route path="orders" element={<Orders />} />
           <Route path="holdings" element={<Holdings />} />
-          <Route path="positions" element={<Positions />} />
           <Route path="funds" element={<Funds />} />
           <Route path="apps" element={<Apps />} />
         </Routes> 

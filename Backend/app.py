@@ -43,6 +43,7 @@ def fetch_stock_prices():
 
                 latest_data[symbol] = {
                     "price": round(current_price, 2),
+                     "prev_close": round(previous_close, 2), 
                     "net_change": round(net_change, 2),
                     "percent_change": round(percent_change, 2)
                 }
@@ -52,6 +53,7 @@ def fetch_stock_prices():
                 socketio.emit("stock_update", {
                     "symbol": clean_symbol,
                     "price": round(current_price, 2),
+                    "prev_close": round(previous_close, 2),
                     "net_change": round(net_change, 2),
                     "percent_change": round(percent_change, 2)
                 })

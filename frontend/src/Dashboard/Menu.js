@@ -43,11 +43,6 @@ const Menu = () => {
               </Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link fs-5 fw-semibold" to="/Dashboard/positions">
-                Position
-              </Link>
-            </li>
-            <li className="nav-item">
               <Link className="nav-link fs-5 fw-semibold" to="/Dashboard/funds">
                 Funds
               </Link>

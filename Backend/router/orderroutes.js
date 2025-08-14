@@ -22,7 +22,7 @@ router.post("/newOrder", async (req, res) => {
     // Create order with status 'pending'
     const order = await OrderModel.create({
       user: user._id,
-      cleanSymbol,
+      symbol:cleanSymbol,
       qty,
       price,
       mode,
@@ -42,6 +42,7 @@ router.post("/newOrder", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 router.get("/getOrders/:firebaseUID", async (req, res) => {
   try {
