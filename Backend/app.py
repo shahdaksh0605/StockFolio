@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=20, ping_interval=10, async_mode="threading")
 
-symbols = ["RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS"]
+symbols = ["^NSEI", "^BSESN", "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS"]
 latest_data = {}
 symbols_lock = threading.Lock()
 
@@ -18,13 +18,25 @@ def set_watchlist():
     global symbols
     data = request.get_json()
     new_symbols = [s + ".NS" if not s.startswith("^") else s for s in data.get("symbols", [])]
+    base_symbols = ["^NSEI", "^BSESN"]
+
     with symbols_lock:
-        symbols = new_symbols
+        # Ensure base symbols are always present
+        for base in base_symbols:
+            if base not in symbols:
+                symbols.append(base)
+
+        # Append only new symbols that are not already present
+        for s in new_symbols:
+            if s not in symbols:
+                symbols.append(s)
+
     print(f"Updated symbols: {symbols}")
     return jsonify({"status": "success", "symbols": symbols})
 
 def fetch_stock_prices():
     global latest_data
+    print("Symbols lock = ",symbols_lock)
     while True:
         with symbols_lock:
             current_symbols = symbols.copy()
@@ -34,6 +46,13 @@ def fetch_stock_prices():
                 info = ticker.info
                 current_price = info.get('currentPrice')
                 previous_close = info.get('previousClose')
+
+                if current_price is None or previous_close is None:
+                    hist = ticker.history(period="2d")
+                    if not hist.empty:
+                        current_price = hist['Close'].iloc[-1]
+                        previous_close = hist['Close'].iloc[-2]
+
 
                 if current_price is None or previous_close is None:
                     continue

@@ -5,7 +5,7 @@ import { Route, Routes } from "react-router-dom";
 import { GeneralContextProvider } from "./GeneralContext";
 
 import Apps from "./App";
-import Funds from "./Profile";
+import Profile from "./Profile";
 import Holdings from "./Holding";
 
 import Orders from "./Order";
@@ -26,7 +26,7 @@ const Home = () => {
           <Route index element={<Summary />} />
           <Route path="orders" element={<Orders />} />
           <Route path="holdings" element={<Holdings />} />
-          <Route path="funds" element={<Funds />} />
+          <Route path="profile" element={<Profile />} />
           <Route path="apps" element={<Apps />} />
         </Routes> 
       </div>
