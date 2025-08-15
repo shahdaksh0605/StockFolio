@@ -33,8 +33,6 @@ router.post("/newOrder", async (req, res) => {
     user.orders.push(order._id);
     await user.save();
 
-    // Start watching the price for this order
-    socketClient.watchOrder(order);
 
     res.status(201).json({ message: "Order placed and pending", order });
   } catch (err) {

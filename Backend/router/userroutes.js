@@ -15,12 +15,33 @@ router.post('/saveuser',async (req,res)=>{
         else{
             console.log('email already existsss')
         }
-        console.log("working")
+        console.log("working")      
         return res.status(200).json({exist})
     } catch (error) {
         console.log(error)
     }
 });
+
+router.get('/profile', async (req, res) => {
+    try {
+        const firebaseUID = req.query.firebaseUID; 
+        if (!firebaseUID) {
+            return res.status(400).json({ message: "firebaseUID is required" });
+        }
+
+        const user = await User.findOne({ firebaseUID });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+
 
 // router.get('/addHoldings', async (req, res) => {
 //     const tempholdings = [

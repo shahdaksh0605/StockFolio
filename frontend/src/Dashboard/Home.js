@@ -5,7 +5,7 @@ import { Route, Routes } from "react-router-dom";
 import { GeneralContextProvider } from "./GeneralContext";
 
 import Apps from "./App";
-import Funds from "./Funds";
+import Funds from "./Profile";
 import Holdings from "./Holding";
 
 import Orders from "./Order";
@@ -16,7 +16,7 @@ const Home = () => {
   return (
     <>
 
-      <TopBar /> 
+      <TopBar />
       <div className="d-flex flex-direction-row" style={{height:"700px"}}>
         <GeneralContextProvider>
         <WatchList />

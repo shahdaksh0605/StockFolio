@@ -5,7 +5,7 @@ const Holding = require("./model/Holdingmodel");
 const User = require("./model/usersmodel");
 
 // --- live price cache ---
-const livePrices = Object.create(null);
+const livePrices = {};
 
 const socket = io("http://127.0.0.1:5000", {
   transports: ["websocket"],
@@ -22,40 +22,15 @@ socket.on("stock_update", async (payload) => {
     if (!symbol || price == null) return;
 
     const cleanSymbol = String(symbol).replace(/\.NS$/i, "").toUpperCase();
+    livePrices[cleanSymbol] = Number(price);
 
-    let prevClose = payload.previous_close;
-
-    if (prevClose == null && typeof payload.net_change === "number") {
-      prevClose = Number(price) - Number(payload.net_change);
-    }
-    if (prevClose == null && typeof payload.percent_change === "number") {
-      const pct = Number(payload.percent_change);
-      if (isFinite(pct)) {
-        prevClose = Number(price) / (1 + pct / 100);
-      }
-    }
-    if (prevClose == null) prevClose = Number(price);
-
-    livePrices[cleanSymbol] = {
-      price: Number(price),
-      prevClose: Number(prevClose),
-      netChange:
-        typeof payload.net_change === "number"
-          ? Number(payload.net_change)
-          : Number(price) - Number(prevClose),
-      pctChange:
-        typeof payload.percent_change === "number"
-          ? Number(payload.percent_change)
-          : ((Number(price) - Number(prevClose)) / Number(prevClose)) * 100,
-      ts: Date.now(),
-    };
-
-    await handlePriceTick(cleanSymbol, Number(price));
+    await handleOrders(cleanSymbol, Number(price));
   } catch (err) {
     console.error("❌ Error in stock_update handler:", err);
   }
 });
 
+// --- Percent change helper ---
 function calcPercentChange(current, base) {
   const c = Number(current);
   const b = Number(base);
@@ -63,9 +38,10 @@ function calcPercentChange(current, base) {
   return (((c - b) / b) * 100).toFixed(2) + "%";
 }
 
-async function handlePriceTick(cleanSymbol, currentPrice) {
+// --- Handle pending orders ---
+async function handleOrders(symbol, ltp) {
   const pendingOrders = await OrderModel.find({
-    symbol: cleanSymbol,
+    symbol,
     status: "pending",
   }).sort({ createdAt: 1 });
 
@@ -73,52 +49,73 @@ async function handlePriceTick(cleanSymbol, currentPrice) {
 
   for (const order of pendingOrders) {
     const targetPrice = Number(order.price);
-    const live = livePrices[cleanSymbol] || {};
-    const px = isFinite(live.price) ? live.price : currentPrice;
+    const userId = order.user;
 
-    const shouldBuy = order.mode === "BUY" && px <= targetPrice + 1;
-    const shouldSell = order.mode === "SELL" && px >= targetPrice;
+    const shouldBuy = order.mode === "BUY" && ltp <= targetPrice;
+    const shouldSell = order.mode === "SELL" && ltp >= targetPrice;
 
     if (!(shouldBuy || shouldSell)) continue;
 
+    // Execute order
     const updated = await OrderModel.findOneAndUpdate(
       { _id: order._id, status: "pending" },
-      { status: "executed", executedAt: new Date(), executedPrice: px },
+      { status: "executed", executedAt: new Date(), executedPrice: ltp },
       { new: true }
     );
 
     if (!updated) continue;
 
     if (shouldBuy) {
-      await addToHoldings(order.user, cleanSymbol, Number(order.qty), px);
-      console.log(`✅ BUY executed for ${cleanSymbol} at ${px}`);
+      const cost = ltp * order.qty;
+      const canBuy = await updateBalance(userId, -cost);
+      if (!canBuy) {
+        console.log(`❌ BUY failed for ${symbol}: insufficient balance`);
+        continue;
+      }
+      await addToHoldings(userId, symbol, order.qty, ltp);
+      console.log(`✅ BUY executed: ${symbol} @ ₹${ltp} | Cost: ₹${cost}`);
     } else {
-      await reduceHoldings(order.user, cleanSymbol, Number(order.qty));
-      console.log(`✅ SELL executed for ${cleanSymbol} at ${px}`);
+      const gain = ltp * order.qty;
+      await updateBalance(userId, gain);
+      await reduceHoldings(userId, symbol, order.qty);
+      console.log(`✅ SELL executed: ${symbol} @ ₹${ltp} | Gain: ₹${gain}`);
     }
   }
 }
 
+// --- Update balance ---
+async function updateBalance(userId, amountChange) {
+  const user = await User.findById(userId);
+  if (!user) return false;
+
+  if (typeof user.balance !== "number") user.balance = 1000000;
+
+  if (amountChange < 0 && user.balance + amountChange < 0) return false; // insufficient funds
+
+  user.balance += amountChange;
+  await user.save();
+  return true;
+}
+
 // --- Holdings ---
-async function addToHoldings(userId, symbol, qty, execPrice) {
+async function addToHoldings(userId, symbol, qty, price) {
   qty = Number(qty);
-  execPrice = Number(execPrice);
+  price = Number(price);
 
   const live = livePrices[symbol] || {};
-  const prevClose = isFinite(live.prevClose) ? live.prevClose : execPrice;
+  const prevClose = isFinite(live.prevClose) ? live.prevClose : price;
 
   let holding = await Holding.findOne({ user: userId, stockName: symbol });
 
   if (holding) {
-    const totalCost = holding.avg * holding.quantity + execPrice * qty;
+    const totalCost = holding.avg * holding.quantity + price * qty;
     const totalQty = holding.quantity + qty;
 
     holding.avg = totalCost / totalQty;
     holding.quantity = totalQty;
-    holding.stockPrice = execPrice;
-
-    holding.net = calcPercentChange(execPrice, holding.avg);
-    holding.day = calcPercentChange(execPrice, prevClose);
+    holding.stockPrice = price;
+    holding.net = calcPercentChange(price, holding.avg);
+    holding.day = calcPercentChange(price, prevClose);
 
     await holding.save();
   } else {
@@ -126,10 +123,10 @@ async function addToHoldings(userId, symbol, qty, execPrice) {
       user: userId,
       stockName: symbol,
       quantity: qty,
-      avg: execPrice,
-      stockPrice: execPrice,
+      avg: price,
+      stockPrice: price,
       net: "0.00%",
-      day: calcPercentChange(execPrice, prevClose),
+      day: calcPercentChange(price, prevClose),
     });
   }
 

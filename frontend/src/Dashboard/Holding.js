@@ -52,7 +52,7 @@ const Holdings = () => {
                 : (stock.stockPrice > 0 ? stock.stockPrice : stock.avg);  // fallback to avg if no live price
               const curValue = ltp * qty;
               const pl = (ltp - avg) * qty;
-
+              
               const netChange =
                 avg !== 0
                   ? `${(((ltp - avg) / avg) * 100).toFixed(2)}%`
@@ -60,7 +60,7 @@ const Holdings = () => {
 
               const dayChange =
                 live.percent_change != null
-                  ? `${Number(live.percent_change).toFixed(2)}%`
+                  ? `${Number(live.percent_change).toFixed(2)}%`  
                   : "0.00%";
 
               const profitClass = pl >= 0 ? "text-success" : "text-danger";
