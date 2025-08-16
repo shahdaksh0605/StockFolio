@@ -7,7 +7,7 @@ import { GeneralContextProvider } from "./GeneralContext";
 import Apps from "./App";
 import Profile from "./Profile";
 import Holdings from "./Holding";
-
+import Alerts from "./Alerts";
 import Orders from "./Order";
 import Summary from "./Summary";
 import WatchList from "./WatchList";
@@ -15,7 +15,7 @@ import WatchList from "./WatchList";
 const Home = () => {
   return (
     <>
-
+      <Alerts/>
       <TopBar />
       <div className="d-flex flex-direction-row" style={{height:"700px"}}>
         <GeneralContextProvider>

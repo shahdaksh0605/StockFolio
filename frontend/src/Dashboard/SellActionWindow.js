@@ -1,17 +1,17 @@
 import React, { useState, useContext } from "react";
 import GeneralContext from "./GeneralContext";
-import { useAuth } from "../context/authcontext/index";
+import { useAuth } from "../context/authcontext/index"; // or wherever you store Firebase user
 import axios from "axios";
 
-const BuyActionWindow = ({ uid: stockSymbol }) => {
-  const { closeBuyWindow } = useContext(GeneralContext);
+const SellActionWindow = ({ uid: stockSymbol }) => {
+  const { closeSellWindow } = useContext(GeneralContext);
   const { currentUser } = useAuth();
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleBuy = async () => {
+  const handleSell = async () => {
     if (!quantity || !price) {
       setMessage("Quantity and price are required.");
       return;
@@ -21,24 +21,25 @@ const BuyActionWindow = ({ uid: stockSymbol }) => {
     setMessage("");
 
     try {
-      await axios.post("http://localhost:8000/stockfolio/newOrder", {
+      const response = await axios.post("http://localhost:8000/stockfolio/newOrder", {
         firebaseUID: currentUser.uid,
         symbol: stockSymbol,
         qty: Number(quantity),
         price: Number(price),
-        mode: "BUY",
+        mode: "SELL",
       });
 
-      setMessage("Buy order placed! It will execute when the price matches.");
-      setQuantity(1);
+      setMessage("Sell order placed! It will execute when the price matches.");
+      setQuantity(0);
       setPrice(0);
-      closeBuyWindow();
+      // Optionally close the window
+      closeSellWindow()
     } catch (err) {
-      console.error("Error placing buy order:", err);
+      console.error("Error placing sell order:", err);
       if (err.response?.data?.message) {
         setMessage(err.response.data.message);
       } else {
-        setMessage("Failed to place buy order.");
+        setMessage("Failed to place sell order.");
       }
     } finally {
       setLoading(false);
@@ -47,10 +48,10 @@ const BuyActionWindow = ({ uid: stockSymbol }) => {
 
   return (
     <div
-      className="buy-action-window position-fixed top-50 start-50 translate-middle bg-white p-4 rounded shadow"
+      className="sell-action-window position-fixed top-50 start-50 translate-middle bg-white p-4 rounded shadow"
       style={{ zIndex: 1000, width: "300px" }}
     >
-      <h5 className="mb-3">BUY {stockSymbol}</h5>
+      <h5 className="mb-3">SELL {stockSymbol}</h5>
 
       <div className="mb-2">
         <label className="form-label">Quantity</label>
@@ -78,15 +79,15 @@ const BuyActionWindow = ({ uid: stockSymbol }) => {
       {message && <p className="text-danger small">{message}</p>}
 
       <div className="d-flex justify-content-end">
-        <button className="btn btn-secondary me-2" onClick={closeBuyWindow}>
+        <button className="btn btn-secondary me-2" onClick={closeSellWindow}>
           Cancel
         </button>
-        <button className="btn btn-primary" onClick={handleBuy} disabled={loading}>
-          {loading ? "Placing..." : "BUY"}
+        <button className="btn btn-danger" onClick={handleSell} disabled={loading}>
+          {loading ? "Placing..." : "SELL"}
         </button>
       </div>
     </div>
   );
 };
 
-export default BuyActionWindow;
+export default SellActionWindow;

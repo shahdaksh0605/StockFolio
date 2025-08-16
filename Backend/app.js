@@ -5,6 +5,10 @@ const db = require("./configdb/db");
 const userroutes = require("./router/userroutes");
 const orderroutes = require("./router/orderroutes"); 
 const holdingsRoutes = require("./router/holding");
+const summaryRoutes = require("./router/summaryRoutes")
+const watchlistRoutes = require("./router/watchlistRoutes");
+const alertRoutes = require("./router/alertRoutes");
+
 const app = express();
 const PORT = process.env.PORT || 3002;
 
@@ -18,6 +22,9 @@ app.get("/health", (req, res) => res.send("OK"));
 app.use("/stockfolio", userroutes);
 app.use("/stockfolio", orderroutes); // ✅ Register order routes
 app.use("/stockfolio", holdingsRoutes);
+app.use("/stockfolio", alertRoutes);
+app.use("/api",summaryRoutes);
+app.use("/stockfolio/watchlist", watchlistRoutes);
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

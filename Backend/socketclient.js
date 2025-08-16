@@ -30,6 +30,27 @@ socket.on("stock_update", async (payload) => {
   }
 });
 
+socket.on("prediction_alert", async (payload) => {
+  try {
+    // Persist only if belongs to a known user
+    if (!payload?.userId) return;
+    await Alert.create({
+      user: payload.userId,
+      symbol: payload.symbol,
+      category: "prediction",
+      decision: payload.decision,
+      now: payload.now,
+      predicted: payload.predicted,
+      predicted_change_pct: payload.predicted_change_pct,
+      threshold_pct: payload.threshold_pct,
+      raw: payload,
+    });
+    console.log("🔔 Prediction alert stored:", payload.symbol, payload.decision, payload.predicted_change_pct + "%");
+  } catch (e) {
+    console.error("Failed to store prediction alert:", e);
+  }
+});
+
 // --- Percent change helper ---
 function calcPercentChange(current, base) {
   const c = Number(current);
@@ -56,7 +77,6 @@ async function handleOrders(symbol, ltp) {
 
     if (!(shouldBuy || shouldSell)) continue;
 
-    // Execute order
     const updated = await OrderModel.findOneAndUpdate(
       { _id: order._id, status: "pending" },
       { status: "executed", executedAt: new Date(), executedPrice: ltp },
@@ -74,7 +94,11 @@ async function handleOrders(symbol, ltp) {
       }
       await addToHoldings(userId, symbol, order.qty, ltp);
       console.log(`✅ BUY executed: ${symbol} @ ₹${ltp} | Cost: ₹${cost}`);
-    } else {
+
+      socket.emit("predict_request", { symbol, userId: String(userId), qty: order.qty });
+
+      
+    } else if (shouldSell) {
       const gain = ltp * order.qty;
       await updateBalance(userId, gain);
       await reduceHoldings(userId, symbol, order.qty);

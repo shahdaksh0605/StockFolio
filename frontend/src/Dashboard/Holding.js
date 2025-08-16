@@ -1,91 +1,108 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import useStockprice from "../useStockprice";
+import { useAuth } from "../context/authcontext";
 import axios from "axios";
-import { useAuth } from "../context/authcontext/index";
-import useStockPrices from "../useStockprice"; // your socket hook
+import socket from "../socket";
 
-const Holdings = () => {
+const Holding = () => {
   const { currentUser } = useAuth();
-  const [holdings, setHoldings] = useState([]);
+  const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const prices = useStockPrices(); // live prices from socket
+  const [fallingSymbols, setFallingSymbols] = useState({});
+  const stockSymbols = stocks.map((s) => s.stockName);
 
+  // === Prediction Alerts ===
   useEffect(() => {
-    if (!currentUser?.uid) return;
+    const handler = (payload) => {
+      if (payload?.decision === "fall" && payload?.symbol) {
+        setFallingSymbols((prev) => ({
+          ...prev,
+          [payload.symbol]: true,
+        }));
+      }
+    };
+    socket.on("prediction_alert", handler);
+    return () => socket.off("prediction_alert", handler);
+  }, []);
 
-    axios
-      .get(`http://localhost:8000/stockfolio/getHoldings/${currentUser.uid}`)
-      .then((res) => {
-        setHoldings(res.data || []);
-      })
-      .catch((err) => {
-        console.error("Error fetching holdings:", err);
-      })
-      .finally(() => setLoading(false));
+  // === Fetch Holdings ===
+  useEffect(() => {
+    const fetchHoldings = async () => {
+      try {
+        setLoading(true);
+        const { data } = await axios.get(
+          `http://localhost:8000/stockfolio/getHoldings/${currentUser?.uid}`
+        );
+        console.log("Fetched holdings:", data); // 👈 Debug
+        setStocks(data);
+      } catch (error) {
+        console.error("Error fetching holdings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (currentUser?.uid) fetchHoldings();
   }, [currentUser]);
 
-  if (loading) return <p>Loading holdings...</p>;
+  // === Live Prices ===
+  const stockData = useStockprice(stockSymbols);
 
+  // Safe formatter
+  const formatNum = (val) =>
+    typeof val === "number" && !isNaN(val) ? val.toFixed(2) : "-";
+
+  // === Render ===
   return (
-    <>
-      <h3 className="mb-4">Holdings ({holdings.length})</h3>
-      <div className="table-responsive mb-4">
-        <table className="table table-bordered align-middle mb-0">
-          <thead className="table-light">
+    <div className="container mt-4">
+      <h3 className="mb-3">Your Holdings</h3>
+      {loading ? (
+        <p>Loading...</p>
+      ) : stocks.length === 0 ? (
+        <p>No holdings found.</p>
+      ) : (
+        <table className="table table-bordered">
+          <thead>
             <tr>
-              <th>Instrument</th>
-              <th>Qty.</th>
-              <th>Avg. cost</th>
-              <th>LTP</th>
-              <th>Cur. val</th>
+              <th>Stock</th>
+              <th>Qty</th>
+              <th>Avg Price</th>
+              <th>Current Price</th>
               <th>P&L</th>
-              <th>Net chg.</th>
-              <th>Day chg.</th>
+              <th>DayChange</th>
+              <th>NetChange</th>
+
             </tr>
           </thead>
           <tbody>
-            {holdings.map((stock, index) => {
-              const live = prices?.[stock.stockName] || {};
-              const avg = Number(stock.avg) || 0;
-              const qty = Number(stock.quantity) || 0;
-              const ltp = (live.price !== undefined && live.price !== null)
-                ? live.price
-                : (stock.stockPrice > 0 ? stock.stockPrice : stock.avg);  // fallback to avg if no live price
-              const curValue = ltp * qty;
-              const pl = (ltp - avg) * qty;
-              
-              const netChange =
-                avg !== 0
-                  ? `${(((ltp - avg) / avg) * 100).toFixed(2)}%`
-                  : "0.00%";
-
-              const dayChange =
-                live.percent_change != null
-                  ? `${Number(live.percent_change).toFixed(2)}%`  
-                  : "0.00%";
-
-              const profitClass = pl >= 0 ? "text-success" : "text-danger";
-              const dayClass = dayChange.startsWith("-")
-                ? "text-danger"
-                : "text-success";
+            {stocks.map((stock) => {
+              const current = stockData[stock.stockName]?.price ?? stock.stockPrice ?? 0;
+              const pnl = current > 0 ? (current - stock.avg) * stock.quantity : null;
 
               return (
-                <tr key={index}>
-                  <td>{stock.stockName || "-"}</td>
-                  <td>{qty}</td>
-                  <td>{avg.toFixed(2)}</td>
-                  <td>{ltp.toFixed(2)}</td>
-                  <td>{curValue.toFixed(2)}</td>
-                  <td className={profitClass}>{pl.toFixed(2)}</td>
-                  <td className={profitClass}>{netChange}</td>
-                  <td className={dayClass}>{dayChange}</td>
+                <tr key={stock.stockName}>
+                  <td>{stock.stockName}</td>
+                  <td>{stock.quantity}</td>
+                  <td>{formatNum(stock.avg)}</td>
+                  <td>{formatNum(current)}</td>
+                  <td className={pnl > 0 ? "text-success" : pnl < 0 ? "text-danger" : ""}>
+                    {pnl !== null ? formatNum(pnl) : "-"}
+                  </td>
+                  <td className={stock.dayChange > 0 ? "text-success" : stock.dayChange < 0 ? "text-danger" : ""}>
+                    {stock.dayChange !== null ? formatNum(stock.dayChange) : "-"}
+                  </td>
+                  <td className={stock.netChange > 0 ? "text-success" : stock.netChange < 0 ? "text-danger" : ""}>
+                    {stock.netChange !== null ? formatNum(stock.netChange) + "%" : "-"}
+                  </td>
                 </tr>
               );
             })}
+
           </tbody>
         </table>
-      </div>
-    </>
+      )}
+    </div>
   );
 };
 
-export default Holdings;
+export default Holding;
