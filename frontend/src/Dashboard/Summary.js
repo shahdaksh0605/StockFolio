@@ -1,81 +1,259 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FaUserCircle } from "react-icons/fa";
-import { useAuth } from "../context/authcontext/index"; // assuming you store user in context
+import { useAuth } from "../context/authcontext";
+import useStockprice from "../useStockprice";
+import {
+  FaUserCircle,
+  FaRupeeSign,
+  FaChartLine,
+  FaBalanceScale,
+  FaPercentage,
+} from "react-icons/fa";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
+} from "recharts";
 
 const Summary = () => {
-  const { currentUser } = useAuth(); // get user from firebase/auth or your system
-  const [summary, setSummary] = useState(null);
+  const { currentUser } = useAuth();
+  const [holdings, setHoldings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [historyData, setHistoryData] = useState({});
 
+  // Fetch holdings
   useEffect(() => {
-    if (!currentUser) return;
-
-    axios
-      .get(`http://localhost:8000/api/summary/${currentUser.uid}`)
-      .then((res) => setSummary(res.data))
-      .catch((err) => console.error(err));
+    const fetchHoldings = async () => {
+      try {
+        if (!currentUser?.uid) return;
+        const { data } = await axios.get(
+          `http://localhost:8000/stockfolio/getHoldings/${currentUser.uid}`
+        );
+        setHoldings(data);
+      } catch (error) {
+        console.error("Summary fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHoldings();
   }, [currentUser]);
 
-  if (!summary) return <p>Loading summary...</p>;
+  // Fetch history for each holding
+  useEffect(() => {
+    const fetchHistoryData = async () => {
+      try {
+        const results = {};
+        for (let stock of holdings) {
+          const res = await axios.get(
+            `http://localhost:5000/history/${stock.stockName}`
+          );
+          results[stock.stockName] = res.data.map((d) => ({
+            date: d.date,
+            value: d.price,
+          }));
+        }
+        setHistoryData(results);
+      } catch (err) {
+        console.error("Error fetching history:", err);
+      }
+    };
+
+    if (holdings.length > 0) fetchHistoryData();
+  }, [holdings]);
+
+  const stockSymbols = holdings.map((h) => h.stockName);
+  const stockData = useStockprice(stockSymbols);
+
+  const formatNum = (val) =>
+    typeof val === "number" && !isNaN(val) ? val.toFixed(2) : "-";
+
+  let totalInvestment = 0;
+  let totalCurrent = 0;
+
+  holdings.forEach((stock) => {
+    const current = stockData[stock.stockName]?.price ?? stock.stockPrice ?? 0;
+    totalInvestment += stock.avg * stock.quantity;
+    totalCurrent += current * stock.quantity;
+  });
+
+  const totalPnL = totalCurrent - totalInvestment;
+  const totalPnLPercent =
+    totalInvestment > 0 ? (totalPnL / totalInvestment) * 100 : 0;
+
+  // pick first stock’s history for sparklines
+  const chartData =
+    holdings.length > 0 && historyData[holdings[0].stockName]
+      ? historyData[holdings[0].stockName]
+      : [];
+
+  // prepare bar chart data for all holdings
+  const barChartData = holdings.map((stock) => {
+    const current = stockData[stock.stockName]?.price ?? stock.stockPrice ?? 0;
+    return {
+      name: stock.stockName,
+      Investment: stock.avg * stock.quantity,
+      Current: current * stock.quantity,
+    };
+  });
 
   return (
-    <div className="p-3 bg-white rounded shadow-sm w-100 h-100">
-      {/* User Greeting */}
-      <div className="mb-3 d-flex align-items-center gap-2">
-        <FaUserCircle size={28} className="text-primary" />
-        <h6 className="mb-0">Hi, {summary.name || "User"}!</h6>
-      </div>
-      <hr className="my-2" />
-
-      {/* Equity / Balance Section */}
-      <div className="mb-4">
-        <p className="mb-2 fw-bold">Equity</p>
-        <div className="p-3 bg-light rounded">
-          <div className="mb-2">
-            <h3 className="mb-1">₹{summary.balance.toLocaleString()}</h3>
-            <p className="mb-0 text-muted">Margin available</p>
-          </div>
-          <hr className="my-2" />
-          <div className="d-flex flex-column gap-1">
-            <p className="mb-0">
-              Margins used <span className="fw-bold">₹0</span>
-            </p>
-            <p className="mb-0">
-              Opening balance <span className="fw-bold">₹{summary.balance.toLocaleString()}</span>
-            </p>
-          </div>
+    <div className="container mt-4">
+      <div className="card shadow-lg p-4 border-0 rounded-4">
+        {/* Header */}
+        <div className="d-flex align-items-center mb-4">
+          <FaUserCircle size={45} className="me-3 text-primary" />
+          <h3 className="fw-bold mb-0">Portfolio Summary</h3>
         </div>
-        <hr className="my-3" />
+
+        {loading ? (
+          <p>Loading...</p>
+        ) : holdings.length === 0 ? (
+          <p>No holdings to summarize.</p>
+        ) : (
+          <>
+            {/* Summary cards */}
+            <div className="row text-center">
+              {/* Investment */}
+              <div className="col-md-3 mb-3">
+                <div className="p-3 rounded-4 shadow-sm h-100 bg-light hover-card">
+                  <FaRupeeSign size={22} className="mb-2 text-dark" />
+                  <h6>Total Investment</h6>
+                  <p className="fw-bold text-primary fs-5">
+                    ₹{formatNum(totalInvestment)}
+                  </p>
+                  <ResponsiveContainer width="100%" height={50}>
+                    <LineChart data={chartData}>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#0d6efd"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Current Value */}
+              <div className="col-md-3 mb-3">
+                <div className="p-3 rounded-4 shadow-sm h-100 bg-light hover-card">
+                  <FaChartLine size={22} className="mb-2 text-success" />
+                  <h6>Current Value</h6>
+                  <p className="fw-bold text-success fs-5">
+                    ₹{formatNum(totalCurrent)}
+                  </p>
+                  <ResponsiveContainer width="100%" height={50}>
+                    <LineChart data={chartData}>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#198754"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* P&L */}
+              <div className="col-md-3 mb-3">
+                <div className="p-3 rounded-4 shadow-sm h-100 bg-light hover-card">
+                  <FaBalanceScale size={22} className="mb-2" />
+                  <h6>P&L</h6>
+                  <p
+                    className={`fw-bold fs-5 ${
+                      totalPnL > 0
+                        ? "text-success"
+                        : totalPnL < 0
+                        ? "text-danger"
+                        : "text-secondary"
+                    }`}
+                  >
+                    ₹{formatNum(totalPnL)}
+                  </p>
+                  <ResponsiveContainer width="100%" height={50}>
+                    <LineChart data={chartData}>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke={totalPnL >= 0 ? "#198754" : "#dc3545"}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* P&L % */}
+              <div className="col-md-3 mb-3">
+                <div className="p-3 rounded-4 shadow-sm h-100 bg-light hover-card">
+                  <FaPercentage size={22} className="mb-2" />
+                  <h6>P&L %</h6>
+                  <p
+                    className={`fw-bold fs-5 ${
+                      totalPnLPercent > 0
+                        ? "text-success"
+                        : totalPnLPercent < 0
+                        ? "text-danger"
+                        : "text-secondary"
+                    }`}
+                  >
+                    {formatNum(totalPnLPercent)}%
+                  </p>
+                  <ResponsiveContainer width="100%" height={50}>
+                    <LineChart data={chartData}>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke={totalPnLPercent >= 0 ? "#198754" : "#dc3545"}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* Holdings Bar Chart */}
+            <div className="mt-5">
+              <h5 className="fw-bold mb-3 text-center">Holdings Overview</h5>
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={barChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="Investment" fill="#0d6efd" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="Current" fill="#198754" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Holdings Section */}
-      <div className="mb-4">
-        <p className="mb-2 fw-bold">Holdings</p>
-        <div className="p-3 bg-light rounded">
-          <div className="mb-2">
-            <h3
-              className={`mb-1 ${summary.pnl >= 0 ? "text-success" : "text-danger"}`}
-            >
-              ₹{summary.pnl.toLocaleString()}{" "}
-              <small className={summary.pnl >= 0 ? "text-success" : "text-danger"}>
-                {summary.pnlPercent > 0 ? "+" : ""}
-                {summary.pnlPercent}%
-              </small>
-            </h3>
-            <p className="mb-0 text-muted">P&L</p>
-          </div>
-          <hr className="my-2" />
-          <div className="d-flex flex-column gap-1">
-            <p className="mb-0">
-              Current Value <span className="fw-bold">₹{summary.holdingsValue.toLocaleString()}</span>
-            </p>
-            <p className="mb-0">
-              Investment <span className="fw-bold">₹{summary.investment.toLocaleString()}</span>
-            </p>
-          </div>
-        </div>
-        <hr className="my-3" />
-      </div>
+      <style>{`
+        .hover-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hover-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
+        }
+      `}</style>
     </div>
   );
 };

@@ -6,15 +6,15 @@ import { useAuth } from "../context/authcontext/index";
 
 const useAlerts = () => {
   const { currentUser } = useAuth();
-  const [alerts, setAlerts] = useState([]);
+  const [alerts, setAlerts] = useState([]); // Only one state for the filtered alerts
 
   // live push from Flask
   useEffect(() => {
     const handler = (payload) => {
-      if (!currentUser?.uid) return;
-      if (payload?.userId) {
-        // We only care about alerts for this user; backend puts Mongo _id, not firebaseUID,
-        // so we can't match here; we'll still display but rely on REST fetch for persistence.
+      if (!currentUser?.uid || !payload?.userId) return;
+
+      // Only add the new alert if it's a "fall" decision
+      if (payload.decision === "fall") {
         setAlerts((prev) => [payload, ...prev]);
       }
     };
@@ -22,11 +22,21 @@ const useAlerts = () => {
     return () => socket.off("prediction_alert", handler);
   }, [currentUser]);
 
-  // pull persisted alerts from Node (maps firebaseUID → user → alerts)
+  // pull persisted alerts from Node and filter them
   const refresh = useCallback(async () => {
     if (!currentUser?.uid) return;
-    const { data } = await axios.get(`http://localhost:8000/stockfolio/alerts/${currentUser.uid}`);
-    setAlerts(data || []);
+    try {
+      const { data } = await axios.get(`http://localhost:8000/stockfolio/alerts/${currentUser.uid}`);
+      if (data) {
+        const fallAlerts = data.filter(a => a.decision === 'fall');
+        setAlerts(fallAlerts);
+      } else {
+        setAlerts([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch alerts:", error);
+      setAlerts([]);
+    }
   }, [currentUser]);
 
   // mark read

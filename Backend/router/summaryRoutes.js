@@ -15,27 +15,58 @@ router.get("/summary/:firebaseUID", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 🔑 Find holdings by user's MongoDB _id (since holding.user is an ObjectId ref to User)
+    // 🔑 Get holdings
     const holdings = await Holding.find({ user: user._id });
+
+    // If no holdings, return default summary
+    if (!holdings || holdings.length === 0) {
+      return res.json({
+        name: user.name,
+        balance: user.balance,
+        investment: 0,
+        currentValue: 0,
+        pnl: 0,
+        pnlPercent: 0,
+        holdings: []
+      });
+    }
 
     let investment = 0;
     let currentValue = 0;
 
-    holdings.forEach(h => {
-      investment += h.quantity * h.avg;
-      currentValue += h.quantity * h.stockPrice;
+    const holdingsWithPnL = holdings.map(h => {
+      const invested = h.quantity * h.avg;
+      const value = h.quantity * h.stockPrice;
+      const pnl = value - invested;
+      const pnlPercent = invested > 0 ? (pnl / invested) * 100 : 0;
+
+      // add to totals
+      investment += invested;
+      currentValue += value;
+
+      return {
+        stockName: h.stockName,
+        quantity: h.quantity,
+        avg: h.avg,
+        stockPrice: h.stockPrice,
+        invested,
+        currentValue: value,
+        pnl,
+        pnlPercent
+      };
     });
 
-    const pnl = currentValue - investment;
-    const pnlPercent = investment > 0 ? ((pnl / investment) * 100).toFixed(2) : 0;
+    const totalPnL = currentValue - investment;
+    const totalPnLPercent = investment > 0 ? (totalPnL / investment) * 100 : 0;
 
     res.json({
       name: user.name,
       balance: user.balance,
-      holdingsValue: currentValue,
       investment,
-      pnl,
-      pnlPercent
+      currentValue,
+      pnl: totalPnL,
+      pnlPercent: totalPnLPercent,
+      holdings: holdingsWithPnL // 👈 detailed breakdown
     });
 
   } catch (err) {

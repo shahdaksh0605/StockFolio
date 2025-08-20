@@ -45,7 +45,7 @@ socket.on("prediction_alert", async (payload) => {
       threshold_pct: payload.threshold_pct,
       raw: payload,
     });
-    console.log("🔔 Prediction alert stored:", payload.symbol, payload.decision, payload.predicted_change_pct + "%");
+    console.log("Prediction alert stored:", payload.symbol, payload.decision, payload.predicted_change_pct + "%");
   } catch (e) {
     console.error("Failed to store prediction alert:", e);
   }
@@ -72,6 +72,11 @@ async function handleOrders(symbol, ltp) {
     const targetPrice = Number(order.price);
     const userId = order.user;
 
+    if (order.mode === "BUY" && targetPrice > ltp) {
+      targetPrice = ltp;
+      console.log(`🔄 Adjusted BUY price for ${symbol}: set to current LTP ₹${ltp}`);
+    }
+
     const shouldBuy = order.mode === "BUY" && ltp <= targetPrice;
     const shouldSell = order.mode === "SELL" && ltp >= targetPrice;
 
@@ -89,11 +94,11 @@ async function handleOrders(symbol, ltp) {
       const cost = ltp * order.qty;
       const canBuy = await updateBalance(userId, -cost);
       if (!canBuy) {
-        console.log(`❌ BUY failed for ${symbol}: insufficient balance`);
+        console.log(`BUY failed for ${symbol}: insufficient balance`);
         continue;
       }
       await addToHoldings(userId, symbol, order.qty, ltp);
-      console.log(`✅ BUY executed: ${symbol} @ ₹${ltp} | Cost: ₹${cost}`);
+      console.log(`BUY executed: ${symbol} @ ₹${ltp} | Cost: ₹${cost}`);
 
       socket.emit("predict_request", { symbol, userId: String(userId), qty: order.qty });
 

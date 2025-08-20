@@ -18,7 +18,7 @@ const WatchList = () => {
         if (!currentUser) return;
 
         axios.get(`http://localhost:8000/stockfolio/watchlist/${currentUser.uid}`)
-            .then(res => setWatchlist(res.data.map(name => ({ name }))))
+            .then(res => setWatchlist(res.data.map(s => ({ name: s.replace(".NS", "") }))))
             .catch(err => console.error("Failed to fetch watchlist:", err));
     }, [currentUser]);
 
@@ -96,27 +96,25 @@ const WatchListItem = ({ stock, setWatchlist }) => {
 
     const cleanSymbol = stock.name.replace(".NS", "");
     const liveData = prices[cleanSymbol];
+    const [historyData, setHistoryData] = useState([]);
 
     const handleOpenAnalytics = async () => {
         await fetchHistoryData();
         setAnalyticsOpen(true);
     };
+
     const handleMouseEnter = () => setshowWatchListAction(true);
     const handleMouseExit = () => setshowWatchListAction(false);
-
     const handleCloseAnalytics = () => setAnalyticsOpen(false);
-    const [historyData, setHistoryData] = useState([]);
 
     const fetchHistoryData = async () => {
         try {
             const res = await axios.get(`http://localhost:5000/history/${stock.name}`);
-            setHistoryData(res.data); // res.data should be [{date, price}, ...]
+            setHistoryData(res.data); 
         } catch (err) {
             console.error(err); 
         }
     };
-
-
 
     const handleRemoveStock = async () => {
         if (!currentUser) return;
@@ -131,6 +129,12 @@ const WatchListItem = ({ stock, setWatchlist }) => {
         }
     };
 
+    // ✅ Safe values
+    const percentChange = liveData?.percent_change !== undefined
+        ? liveData.percent_change.toFixed(2)
+        : null;
+    const netChange = liveData?.net_change ?? null;
+    const price = liveData?.price ?? null;
 
     return (
         <li
@@ -140,24 +144,24 @@ const WatchListItem = ({ stock, setWatchlist }) => {
             style={{ borderBottomWidth: "0.8px", borderColor: "rgb(235, 234, 234)" }}
         >
             <div className="d-flex align-items-center justify-content-between fw-light small">
-                <p className={liveData?.net_change < 0 ? "text-danger" : "text-success"}>
+                <p className={netChange < 0 ? "text-danger" : "text-success"}>
                     {stock.name}
                 </p>
 
                 <div className="d-flex align-items-center">
                     <span className="fw-light text-muted">
-                        {liveData ? `${liveData.percent_change.toFixed(2)}%` : "Loading..."}
+                        {percentChange !== null ? `${percentChange}%` : "Loading..."}
                     </span>
 
-                    {liveData &&
-                        (liveData.net_change < 0 ? (
+                    {netChange !== null &&
+                        (netChange < 0 ? (
                             <KeyboardArrowDown className="text-danger m-1" />
                         ) : (
                             <KeyboardArrowUp className="text-success m-1" />
                         ))}
 
-                    <span className={(liveData?.net_change < 0 ? "text-danger" : "text-success") + " m-1"}>
-                        {liveData ? `₹${liveData.price}` : "--"}
+                    <span className={(netChange < 0 ? "text-danger" : "text-success") + " m-1"}>
+                        {price !== null ? `₹${price}` : "--"}
                     </span>
                 </div>
             </div>
@@ -167,7 +171,7 @@ const WatchListItem = ({ stock, setWatchlist }) => {
                     <WatchListActions
                         uid={stock.name}
                         handleRemoveStock={handleRemoveStock}
-                        handleOpenAnalytics={handleOpenAnalytics} // Pass handler to button
+                        handleOpenAnalytics={handleOpenAnalytics}
                     />
                 </span>
             )}
@@ -183,6 +187,7 @@ const WatchListItem = ({ stock, setWatchlist }) => {
         </li>
     );
 };
+
 
 const WatchListActions = ({ uid, handleRemoveStock, handleOpenAnalytics }) => {
     const generalContext = useContext(GeneralContext);

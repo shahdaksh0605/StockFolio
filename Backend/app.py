@@ -138,18 +138,20 @@ def fetch_stock_prices():
                     decision = "fall" if pct_change <= FALL_THRESHOLD_PCT else "neutral_or_rise"
 
                     alert = {
-                        "type": "prediction",
+                        "firebaseUID": "tUhKcwidMTOuKV6nFzkfXkPobxi1",
                         "symbol": clean_symbol,
-                        "userId": None,  # global alerts (not tied to one user)
                         "now": round(current_close, 2),
                         "predicted": round(next_close, 2),
                         "predicted_change_pct": round(pct_change, 2),
                         "decision": decision,
                         "threshold_pct": FALL_THRESHOLD_PCT,
-                        "ts": datetime.now(timezone.utc).isoformat()
+                        "raw": {"source": "flask_model", "ts": datetime.now(timezone.utc).isoformat()}
                     }
-
+                    
+                    # This will push the alert to the frontend in real-time
                     socketio.emit("prediction_alert", alert)
+
+                    # This will save the alert to the database
                     try:
                         requests.post("http://localhost:8000/stockfolio/alerts/save", json=alert)
                     except Exception as e:
